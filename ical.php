@@ -43,7 +43,7 @@ class VCalender {
 		return $out;
 	}
 
-	public function toFilteredString ($regex, $summary, $description) {
+	public function toFilteredString ($regex, $summary, $description, $regexNot, $summaryNot, $descriptionNot) {
 		$out = "BEGIN:VCALENDAR\r\n";
 		$out .= 'VERSION:' . $this->_version . "\r\n";
 		$out .= "PRODID:$this->_prodid\r\n";
@@ -53,7 +53,13 @@ class VCalender {
 		if (!is_null($misc) && trim($misc) != '')
 			$out .= "\r\n$misc";
 		for ($i = 0; $i < count($this->_events); $i++) {
-			if ((!$summary || preg_match('/'.$regex.'/i', $this->_events[$i]->getSummary())) && (!$description || preg_match('/'.$regex.'/i', $this->_events[$i]->getDescription())))
+			$inSummary = $summary && (!$summary || preg_match('/'.$regex.'/i', $this->_events[$i]->getSummary()));
+			$inDescription = $description && (!$description || preg_match('/'.$regex.'/i', $this->_events[$i]->getDescription()));
+			$inSummaryNot = $summaryNot && preg_match('/'.$regexNot.'/i', $this->_events[$i]->getSummary());
+			$inDescriptionNot = $descriptionNot && preg_match('/'.$regexNot.'/i', $this->_events[$i]->getDescription());
+			$regexOkay = (!$summary && !$description) || $inSummary || $inDescription;
+			$regexNotOkay = !$inSummaryNot && !$inDescriptionNot;
+			if ($regexOkay && $regexNotOkay)
 				$out .= "\r\n" . $this->_events[$i]->toString();
 		}
 		$out .= "\r\nEND:VCALENDAR";
