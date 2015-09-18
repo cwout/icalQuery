@@ -1,7 +1,15 @@
-#ical_url, #regex, #regex_not {
+.half_width {
 	width: 50%;
 }
 
 #out {
 	width: 85%;
+}
+
+hr {
+	border: 0;
+	width: 98%;
+	color: #111;
+	background-color: #111;
+	height: 2px;
 }
