@@ -3,7 +3,9 @@ Options +FollowSymLinks +ExecCGI
 <IfModule mod_rewrite.c>
 
 RewriteEngine On
-RewriteCond %{REQUEST_URI}  (\.ics)$
+RewriteCond %{REQUEST_URI}  (ical\.ics)$
 RewriteRule (.*)  entryPoint.php [QSA]
+RewriteCond %{REQUEST_URI}	((?!ical\.ics).*\.ics)$
+RewriteRule (.*)\.ics entryPoint.php?id=$1 [QSA]
 
 </IfModule>

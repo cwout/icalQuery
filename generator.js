@@ -4,7 +4,8 @@ function generate() {
 	//clear output field
 	document.getElementById('out').value = "";
 	//basic link
-	str = "http://thefaceless.be/icalQuery/ical.ics?";
+	base = 'http://thefaceless.be/icalQuery/ical.ics?';
+	str = '';
 	//parse the first one
 	el = [];
 	el['url'] = encodeURIComponent(document.getElementById('ical_url').value).replace(/\./g,'%2E');
@@ -87,6 +88,20 @@ function generate() {
 		str += '&ttl=' + ttl;
 	}
 
+	xmlHttp = new XMLHttpRequest();
+	xmlHttp.onreadystatechange = function() {
+		if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+			console.log(xmlHttp.responseText);
+		}
+	}
+	xmlHttp.open('POST','http://thefaceless.be/icalQuery/icalLink.php', true);
+	data = 'fragment=' + encodeURIComponent(str);
+	xmlHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	xmlHttp.setRequestHeader("Content-length", data.length);
+	xmlHttp.setRequestHeader("Connection", "close");
+	xmlHttp.send(data);
+
+	str = base + str;
 	document.getElementById('out').value = str;
 	return false;
 }

@@ -1,4 +1,40 @@
 <?php
+
+require_once('../../config/icalLogin.php');
+
+$tmpGet = $_GET;
+
+try {
+	if (isset($_GET['id']) && $_GET['id'] != '') {
+		$conn = new PDO($dbDriver . ':host=' . $dbHost . ';dbname=' . $db . ';charset=ascii', $dbUser, $dbPass);
+		$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		$query = $conn->prepare('SELECT url_fragment FROM shortLinks WHERE id=:id');
+		$query->bindValue('id', $_GET['id']);
+		if ($query->execute()) {
+			$rows = $query->fetchAll(PDO::FETCH_ASSOC);
+			if (count($rows) > 0) {
+				foreach ($_GET as $key => $value) {
+					$_GET[$key] = NULL;
+					unset($_GET[$key]);
+				}
+				$frag = $rows[0]['url_fragment'];
+				$parts = explode('&',$frag);
+				foreach ($parts as $part) {
+					$p = explode('=', $part);
+					$p1 = $p[0];
+					$p2 = '';
+					if (count($p)>1)
+						$p2 = urldecode(implode('=', array_slice($p, 1)));
+					$_GET[$p1] = $p2;
+				}
+			}
+		}
+	}
+}
+catch (PDOException $e) {
+	$_GET = $tmpGet;
+}
+
 //parse ical file
 require_once('ical.php');
 if (!isset($_GET['ical_link'])) {
