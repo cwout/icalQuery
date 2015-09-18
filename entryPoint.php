@@ -3,26 +3,68 @@
 require_once('ical.php');
 if (!isset($_GET['ical_link']))
 	die('');
-$link = $_GET['ical_link'];
-if (filter_var($link, FILTER_VALIDATE_URL))
-$ical = file_get_contents($link);
-if (strlen($ical) == 0)
-	die('');
-$c = parseIcal($ical);
-//get filters from url
-$checkSummary = isset($_GET['summary']);
-$checkDescription = isset($_GET['description']);
-$regex = '.';
+
+$amount = 1;
+while (isset($_GET['ical_link'.($amount+1)])) $amount++;
+
+$link = array();
+$ical = array();
+$c = array();
+$checkSummary = array();
+$checkDescription = array();
+$regex = array();
+$checkSummaryNot = array();
+$checkDescriptionNot = array();
+$regexNot = array();
+
+$link[1] = $_GET['ical_link'];
+$checkSummary[1] = isset($_GET['summary']);
+$checkDescription[1] = isset($_GET['description']);
+$regex[1] = '.';
 if (isset($_GET['regex'])) {
-	$regex = $_GET['regex'];
+	$regex[1] = $_GET['regex'];
 }
-//get not-filters from url
-$checkSummaryNot = isset($_GET['summary_not']);
-$checkDescriptionNot = isset($_GET['description_not']);
-$regexNot = '.';
+$checkSummaryNot[1] = isset($_GET['summary_not']);
+$checkDescriptionNot[1] = isset($_GET['description_not']);
+$regexNot[1] = '.';
 if (isset($_GET['regex_not'])) {
-	$regexNot = $_GET['regex_not'];
+	$regexNot[1] = $_GET['regex_not'];
 }
-//echo
-echo $c->toFilteredString($regex,$checkSummary,$checkDescription,$regexNot,$checkSummaryNot,$checkDescriptionNot);
+
+for ($i = 2; $i <= $amount; $i++) {
+	$link[$i] = $_GET['ical_link'.$i];
+	$checkSummary[$i] = isset($_GET['summary'.$i]);
+	$checkDescription[$i] = isset($_GET['description'.$i]);
+	$regex[$i] = '.';
+	if (isset($_GET['regex'.$i])) {
+		$regex[$i] = $_GET['regex'.$i];
+	}
+	$checkSummaryNot[$i] = isset($_GET['summary_not'.$i]);
+	$checkDescriptionNot[$i] = isset($_GET['description_not'.$i]);
+	$regexNot[$i] = '.';
+	if (isset($_GET['regex_not'.$i])) {
+		$regexNot[$i] = $_GET['regex_not'.$i];
+	}
+}
+
+$final = null;
+
+for ($i = 1; $i <= $amount; $i++) {
+	if (filter_var($link[$i], FILTER_VALIDATE_URL)) {
+		$ical[$i] = file_get_contents($link[$i]);
+		$c[$i] = parseIcal($ical[$i]);
+		if (isset($c[$i]) && !is_null($c[$i]) && $c[$i] != null) {
+			$c[$i]->filter($regex[$i],$checkSummary[$i],$checkDescription[$i],$regexNot[$i],$checkSummaryNot[$i],$checkDescriptionNot[$i]);
+			if ($final == null)
+				$final = $c[$i];
+			else
+				$final = mergeIcal($final, $c[$i]);
+		}
+	}
+}
+
+if ($final != null) {
+	$final->setTtl("PT1M");
+	echo $final->toString();
+}
 ?>

@@ -6,22 +6,30 @@ class VCalender {
 	private $_prodid = '';
 	private $_method = '';
 	private $_calscale = '';
+	private $_name = '';
+	private $_timezone = '';
+	private $_description = '';
+	private $_ttl = '';
 	private $_miscParams = array();
 	private $_events = array();
 
 	//------------------------------------------------------------------
 
-	public function init($version, $prodid, $method, $calscale) {
+	public function init($version, $prodid, $method, $calscale, $name, $timezone, $description, $ttl) {
 		$this->_version = $version;
 		$this->_prodid = $prodid;
 		$this->_method = $method;
 		$this->_calscale = $calscale;
+		$this->_name = $name;
+		$this->_timezone = $timezone;
+		$this->_description = $description;
+		$this->_ttl = $ttl;
 		$this->_miscParams = array();
 		$this->_events = array();
 	}
 
 	public function __construct() {
-		$this->init('','','','');
+		$this->init('','','','','','','','');
 	}
 
 	//------------------------------------------------------------------
@@ -31,17 +39,46 @@ class VCalender {
 		$out .= 'VERSION:' . $this->_version . "\r\n";
 		$out .= "PRODID:$this->_prodid\r\n";
 		$out .= "METHOD:$this->_method\r\n";
-		$out .= "CALSCALE:$this->_calscale";
+		$out .= "CALSCALE:$this->_calscale\r\n";
+		$out .= "X-WR-CALNAME:$this->_name\r\n";
+		$out .= "X-WR-TIMEZONE:$this->_timezone\r\n";
+		$out .= "X-WR-CALDESC:$this->_description\r\n";
+		$out .= "X-PUBLISHED-TTL:$this->_ttl";
 		$misc = $this->getMiscParams();
 		if (!is_null($misc) && trim($misc) != '')
 			$out .= "\r\n$misc";
 		for ($i = 0; $i < count($this->_events); $i++) {
-			$out .= "\r\n" . $this->_events[$i]->toString();
+			if ($this->_events[$i] != NULL)
+				$out .= "\r\n" . $this->_events[$i]->toString();
 		}
 		$out .= "\r\nEND:VCALENDAR";
 		$out = fold($out);
 		return $out;
 	}
+
+
+	public function filter ($regex, $summary, $description, $regexNot, $summaryNot, $descriptionNot) {
+		$this->_events = array_slice($this->_events, 0, NULL);
+		for ($i = 0; $i < count($this->_events); $i++) {
+			$inSummary = $summary && (!$summary || preg_match('/'.$regex.'/i', $this->_events[$i]->getSummary()));
+			$inDescription = $description && (!$description || preg_match('/'.$regex.'/i', $this->_events[$i]->getDescription()));
+			$inSummaryNot = $summaryNot && preg_match('/'.$regexNot.'/i', $this->_events[$i]->getSummary());
+			$inDescriptionNot = $descriptionNot && preg_match('/'.$regexNot.'/i', $this->_events[$i]->getDescription());
+			$regexOkay = (!$summary && !$description) || $inSummary || $inDescription;
+			$regexNotOkay = !$inSummaryNot && !$inDescriptionNot;
+			if (!($regexOkay && $regexNotOkay)) {
+				unset($this->_events[$i]);
+				$this->_events[$i] = NULL;
+			}
+		}
+		$new = array();
+		foreach ($this->_events as $value) {
+			if ($value != NULL)
+				$new[] = $value;
+		}
+		$this->_events = $new;
+	}
+
 
 	public function toFilteredString ($regex, $summary, $description, $regexNot, $summaryNot, $descriptionNot) {
 		$out = "BEGIN:VCALENDAR\r\n";
@@ -101,6 +138,41 @@ class VCalender {
 	}
 
 
+	public function getName () {
+		return $this->_name;
+	}
+	public function setName ($n) {
+		$this->_name = $n;
+	}
+
+
+	public function getTimezone () {
+		return $this->_timezone;
+	}
+	public function setTimezone ($tz) {
+		$this->_timezone = $tz;
+	}
+
+
+	public function getDescription () {
+		return $this->_description;
+	}
+	public function setDescription ($d) {
+		$this->_description = $d;
+	}
+
+
+	public function getTtl () {
+		return $this->_ttl;
+	}
+	public function setTtl ($t) {
+		$this->_ttl = $t;
+	}
+
+
+	public function getMiscParamArray() {
+		return $this->_miscParams;
+	}
 	public function getMiscParams() {
 		$r = '';
 		for ($i = 0; $i < count($this->_miscParams); $i++) {
@@ -115,6 +187,9 @@ class VCalender {
 	}
 
 
+	public function getEventArray() {
+		return $this->_events;
+	}
 	public function getEventAmount() {
 		return count($this->_events);
 	}
@@ -316,6 +391,20 @@ function unfold ($str) {
 	return $out;
 }
 
+function mergeIcal ($ical1, $ical2) {
+	$out = new VCalender();
+	$out->init($ical1->getVersion(), $ical1->getProdid(), $ical1->getMethod(), $ical1->getCalscale(), $ical1->getName(), $ical1->getTimezone(), $ical1->getDescription(), $ical1->getTtl());
+	$tmpMiscParams = array_merge($ical1->getMiscParamArray(),$ical2->getMiscParamArray());
+	foreach ($tmpMiscParams as $param) {
+		$out->addMiscParam($param);
+	}
+	$tmpEvents = array_merge($ical1->getEventArray(), $ical2->getEventArray());
+	foreach ($tmpEvents as $event) {
+		$out->addEvent($event);
+	}
+	return $out;
+}
+
 function parseIcal ($str) {
 	//split in lines, little check
 	$str = str_replace("\r", '', $str);
@@ -364,6 +453,26 @@ function parseIcal ($str) {
 		$query = 'CALSCALE:';
 		if (!$lineParsed && substr($lines[$index], 0, strlen($query)) === $query){
 			$cal->setCalscale(substr($lines[$index], strlen($query)));
+			$lineParsed = true;
+		}
+		$query = 'X-WR-CALNAME:';
+		if (!$lineParsed && substr($lines[$index], 0, strlen($query)) === $query){
+			$cal->setName(substr($lines[$index], strlen($query)));
+			$lineParsed = true;
+		}
+		$query = 'X-WR-TIMEZONE:';
+		if (!$lineParsed && substr($lines[$index], 0, strlen($query)) === $query){
+			$cal->setTimezone(substr($lines[$index], strlen($query)));
+			$lineParsed = true;
+		}
+		$query = 'X-WR-CALDESC:';
+		if (!$lineParsed && substr($lines[$index], 0, strlen($query)) === $query){
+			$cal->setDescription(substr($lines[$index], strlen($query)));
+			$lineParsed = true;
+		}
+		$query = 'X-PUBLISHED-TTL:';
+		if (!$lineParsed && substr($lines[$index], 0, strlen($query)) === $query){
+			$cal->setTtl(substr($lines[$index], strlen($query)));
 			$lineParsed = true;
 		}
 		$query = 'BEGIN:VEVENT';
