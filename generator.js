@@ -49,7 +49,6 @@ function generate() {
 		if (el['hasUrl'] == true)
 			data.push(el);
 	}
-	console.log(data.length);
 	for (i = 0; i < data.length; i++) {
 		if (i > 0)
 			str += '&';
@@ -73,6 +72,19 @@ function generate() {
 				str += '&description_not' + (i==0?'':(i+1));
 			}
 		}
+	}
+
+	name = encodeURIComponent(document.getElementById('name').value).replace(/\./g,'%2E');
+	if (!(typeof(name) == 'undefined' || name == null || name == '')) {
+		str += '&name=' + name;
+	}
+	desc = encodeURIComponent(document.getElementById('desc').value).replace(/\./g,'%2E');
+	if (!(typeof(desc) == 'undefined' || desc == null || desc == '')) {
+		str += '&desc=' + desc;
+	}
+	ttl = encodeURIComponent(document.getElementById('ttl').value).replace(/\./g,'%2E');
+	if (!(typeof(ttl) == 'undefined' || ttl == null || ttl == '')) {
+		str += '&ttl=' + ttl;
 	}
 
 	document.getElementById('out').value = str;

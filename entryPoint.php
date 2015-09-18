@@ -1,8 +1,9 @@
 <?php
 //parse ical file
 require_once('ical.php');
-if (!isset($_GET['ical_link']))
+if (!isset($_GET['ical_link'])) {
 	die('');
+}
 
 $amount = 1;
 while (isset($_GET['ical_link'.($amount+1)])) $amount++;
@@ -64,7 +65,15 @@ for ($i = 1; $i <= $amount; $i++) {
 }
 
 if ($final != null) {
-	$final->setTtl("PT1M");
+	if (isset($_GET['name']) && $_GET['name'] !== NULL && $_GET['name'] !== '') {
+		$final->setName($_GET['name']);
+	}
+	if (isset($_GET['desc']) && $_GET['desc'] !== NULL && $_GET['desc'] !== '') {
+		$final->setDescription($_GET['desc']);
+	}
+	if (isset($_GET['ttl']) && $_GET['ttl'] !== NULL && $_GET['ttl'] !== '' && is_numeric($_GET['ttl']) && intval($_GET['ttl']) > 0) {
+		$final->setTtl('PT' . intval($_GET['ttl']) . 'H');
+	}
 	echo $final->toString();
 }
 ?>

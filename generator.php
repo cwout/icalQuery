@@ -32,6 +32,16 @@
 			<a id="new_form_link" href="#" onclick="return addForm(2);">Add another .ics file</a>
 			<br />
 			<br />
+			<br />
+			<label for="name">Name: </label>
+			<input type="text" name="name" id="name" class="half_width">
+			<br />
+			<label for="desc">Description: </label>
+			<input type="text" name="desc" id="desc" class="half_width">
+			<br />
+			<label for="ttl">Update interval (in hours): </label>
+			<input type="number" min="1" step="1" value="1" name="ttl" id="ttl">
+			<br />
 			<input type="submit" value="Generate Link" onclick="return generate();">
 		</form>
 		<br />

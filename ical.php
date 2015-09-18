@@ -85,7 +85,11 @@ class VCalender {
 		$out .= 'VERSION:' . $this->_version . "\r\n";
 		$out .= "PRODID:$this->_prodid\r\n";
 		$out .= "METHOD:$this->_method\r\n";
-		$out .= "CALSCALE:$this->_calscale";
+		$out .= "CALSCALE:$this->_calscale\r\n";
+		$out .= "X-WR-CALNAME:$this->_name\r\n";
+		$out .= "X-WR-TIMEZONE:$this->_timezone\r\n";
+		$out .= "X-WR-CALDESC:$this->_description\r\n";
+		$out .= "X-PUBLISHED-TTL:$this->_ttl";
 		$misc = $this->getMiscParams();
 		if (!is_null($misc) && trim($misc) != '')
 			$out .= "\r\n$misc";
