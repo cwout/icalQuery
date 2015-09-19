@@ -91,14 +91,14 @@ function generate() {
 	xmlHttp = new XMLHttpRequest();
 	xmlHttp.onreadystatechange = function() {
 		if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-			console.log(xmlHttp.responseText);
+			document.getElementById('out2').value = xmlHttp.responseText;
 		}
 	}
 	xmlHttp.open('POST','http://thefaceless.be/icalQuery/icalLink.php', true);
 	data = 'fragment=' + encodeURIComponent(str);
 	xmlHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	xmlHttp.setRequestHeader("Content-length", data.length);
-	xmlHttp.setRequestHeader("Connection", "close");
+	xmlHttp.setRequestHeader("Connection", "keep-alive");
 	xmlHttp.send(data);
 
 	str = base + str;

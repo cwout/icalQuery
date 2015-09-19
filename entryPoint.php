@@ -5,11 +5,13 @@ require_once('../../config/icalLogin.php');
 $tmpGet = $_GET;
 
 try {
+	$updateIdDateTime = false;
 	if (isset($_GET['id']) && $_GET['id'] != '') {
+		$id = $_GET['id'];
 		$conn = new PDO($dbDriver . ':host=' . $dbHost . ';dbname=' . $db . ';charset=ascii', $dbUser, $dbPass);
 		$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$query = $conn->prepare('SELECT url_fragment FROM shortLinks WHERE id=:id');
-		$query->bindValue('id', $_GET['id']);
+		$query->bindValue('id', $id);
 		if ($query->execute()) {
 			$rows = $query->fetchAll(PDO::FETCH_ASSOC);
 			if (count($rows) > 0) {
@@ -27,7 +29,15 @@ try {
 						$p2 = urldecode(implode('=', array_slice($p, 1)));
 					$_GET[$p1] = $p2;
 				}
+				$updateIdDateTime = true;
 			}
+		}
+		if ($updateIdDateTime == true) {
+			$query = $conn->prepare('UPDATE shortLinks SET last_requested=:dt WHERE id=:id');
+			$dt = date('Y-m-d H:i:s', time());
+			$query->bindValue('dt', $dt);
+			$query->bindValue('id', $id);
+			$query->execute();
 		}
 	}
 }

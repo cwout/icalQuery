@@ -47,7 +47,11 @@
 		<br />
 		<br />
 		<br />
+		<label for="out">Link (long): </label>
 		<input type="text" id="out">
+		<br />
+		<label for="out2">Link (short): </label>
+		<input type="text" id="out2">
 		<br />
 		<br />
 		<br />
